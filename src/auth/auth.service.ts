@@ -13,8 +13,7 @@ import { Cache } from 'cache-manager';
 
 import { envs } from '../config';
 import { Credential } from './entities/credential.entity';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { RegisterDto, LoginDto } from './dto';
 
 @Injectable()
 export class AuthService {
