@@ -14,6 +14,8 @@ import { Cache } from 'cache-manager';
 import { envs } from '../config';
 import { Credential } from './entities/credential.entity';
 import { RegisterDto, LoginDto } from './dto';
+import { RpcException } from '@nestjs/microservices';
+import { JwtPayload } from './interfaces';
 
 @Injectable()
 export class AuthService {
@@ -44,12 +46,12 @@ export class AuthService {
       const saved = await this.credentialRepository.save(credential);
 
       const access_token = await this.jwtService.signAsync(
-        { sub: saved.id, email: saved.email },
+        { id: saved.id, email: saved.email },
         { expiresIn: jwt.expiresIn },
       );
 
       const refresh_token = await this.jwtService.signAsync(
-        { sub: saved.id, email: saved.email },
+        { id: saved.id, email: saved.email },
         { expiresIn: jwt.expiresInRefresh },
       );
 
@@ -79,7 +81,7 @@ export class AuthService {
 
       if (!valid) throw new UnauthorizedException('Credenciales inválidas');
 
-      const payload = { id: user.id, email: user.email };
+      const payload: JwtPayload = { id: user.id, email: user.email };
       const access_token = this.jwtService.sign(payload);
       const refresh_token = await this.jwtService.signAsync(payload, {
         expiresIn: '7d',
@@ -96,15 +98,22 @@ export class AuthService {
     } catch (error) {
       console.error('[AuthService Error]', error);
       throw error instanceof UnauthorizedException
-        ? error
-        : new InternalServerErrorException();
+        ? new RpcException({statusCode: error.getStatus(), message:error.message})
+        : new RpcException({statusCode: 500, message:'No se pudo actualizar el token'});
     }
   }
 
   async refresh(refreshToken: string) {
     try {
       const { jwt } = envs;
-      const payload = await this.jwtService.verifyAsync(refreshToken);
+      let payload: JwtPayload | null = null;
+      try {
+        payload= await this.jwtService.verifyAsync(refreshToken)
+      } catch (error) {
+        throw new UnauthorizedException('Token inválido');
+      }
+      
+      if(!payload) throw new UnauthorizedException('Token inválido');
 
       const storedToken = await this.cacheManager.get<string>(
         `refresh_token:${payload.id}`,
@@ -114,7 +123,7 @@ export class AuthService {
       }
 
       const newAccessToken = await this.jwtService.signAsync(
-        { sub: payload.sub, email: payload.email },
+        { id: payload.id, email: payload.email },
         { expiresIn: jwt.expiresIn },
       );
 
@@ -122,8 +131,8 @@ export class AuthService {
     } catch (error) {
       console.error('[Refresh Error]', error);
       throw error instanceof UnauthorizedException
-        ? error
-        : new InternalServerErrorException('No se pudo actualizar el token');
+        ? new RpcException({statusCode: error.getStatus(), message:error.message})
+        : new RpcException({statusCode: 500, message:'No se pudo actualizar el token'});
     }
   }
 
@@ -133,7 +142,7 @@ export class AuthService {
       return { message: 'Sesión cerrada correctamente' };
     } catch (error) {
       console.error('[Logout Error]', error);
-      throw new InternalServerErrorException('No se pudo cerrar sesión');
+      throw new RpcException({statusCode: 500, message:'No se pudo cerrar sesión'});
     }
   }
 }

@@ -33,7 +33,7 @@ export class AuthController {
   //@Post('logout')
   //@ApiBearerAuth()
   @MessagePattern({cmd: 'logout'})
-  @UseGuards(JwtAuthGuard)
+  //@UseGuards(JwtAuthGuard)
   logout(@Payload() body: { userId: string }) {
     return this.authService.logout(body.userId);
   }
