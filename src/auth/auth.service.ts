@@ -62,8 +62,8 @@ export class AuthService {
     } catch (error) {
       console.error('[AuthService Error]', error);
       throw error instanceof ConflictException
-        ? error
-        : new InternalServerErrorException();
+        ? new RpcException({statusCode: error.getStatus(), message: error.message})
+        : new RpcException({statusCode: 500, message: 'No se pudo registrar el usuario'});
     }
   }
 
