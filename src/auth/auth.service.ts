@@ -24,7 +24,7 @@ export class AuthService {
     private readonly credentialRepository: Repository<Credential>,
     private readonly jwtService: JwtService,
     @Inject('CACHE_MANAGER') private readonly cacheManager: Cache,
-  ) {}
+  ) { }
 
   async register(data: RegisterDto) {
     try {
@@ -62,8 +62,8 @@ export class AuthService {
     } catch (error) {
       console.error('[AuthService Error]', error);
       throw error instanceof ConflictException
-        ? new RpcException({statusCode: error.getStatus(), message:error.message})
-        : new RpcException({statusCode: 500, message:'No se pudo registrar el usuario'});
+        ? new RpcException({ statusCode: error.getStatus(), message: error.message })
+        : new RpcException({ statusCode: 500, message: 'No se pudo registrar el usuario' });
     }
   }
 
@@ -98,8 +98,8 @@ export class AuthService {
     } catch (error) {
       console.error('[AuthService Error]', error);
       throw error instanceof UnauthorizedException
-        ? new RpcException({statusCode: error.getStatus(), message:error.message})
-        : new RpcException({statusCode: 500, message:'No se pudo actualizar el token'});
+        ? new RpcException({ statusCode: error.getStatus(), message: error.message })
+        : new RpcException({ statusCode: 500, message: 'No se pudo actualizar el token' });
     }
   }
 
@@ -108,12 +108,12 @@ export class AuthService {
       const { jwt } = envs;
       let payload: JwtPayload | null = null;
       try {
-        payload= await this.jwtService.verifyAsync(refreshToken)
+        payload = await this.jwtService.verifyAsync(refreshToken)
       } catch (error) {
         throw new UnauthorizedException('Token inválido');
       }
-      
-      if(!payload) throw new UnauthorizedException('Token inválido');
+
+      if (!payload) throw new UnauthorizedException('Token inválido');
 
       const storedToken = await this.cacheManager.get<string>(
         `refresh_token:${payload.id}`,
@@ -131,8 +131,8 @@ export class AuthService {
     } catch (error) {
       console.error('[Refresh Error]', error);
       throw error instanceof UnauthorizedException
-        ? new RpcException({statusCode: error.getStatus(), message:error.message})
-        : new RpcException({statusCode: 500, message:'No se pudo actualizar el token'});
+        ? new RpcException({ statusCode: error.getStatus(), message: error.message })
+        : new RpcException({ statusCode: 500, message: 'No se pudo actualizar el token' });
     }
   }
 
@@ -142,7 +142,7 @@ export class AuthService {
       return { message: 'Sesión cerrada correctamente' };
     } catch (error) {
       console.error('[Logout Error]', error);
-      throw new RpcException({statusCode: 500, message:'No se pudo cerrar sesión'});
+      throw new RpcException({ statusCode: 500, message: 'No se pudo cerrar sesión' });
     }
   }
 }
